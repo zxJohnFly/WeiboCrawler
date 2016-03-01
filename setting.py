@@ -1,4 +1,4 @@
-username = '2311490760@qq.com'
-password = 'zx2681618'
+username = ''
+password = ''
 
 Catogeries = ['sport', 'music', 'moive','fashion']
