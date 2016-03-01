@@ -50,6 +50,9 @@ class Parser(object):
         regex_domid = re.compile('"domid":"Pl_Core_MixedFeed__5"')
 
         for item in data:
+            if item.string is None:
+            	continue
+
             script = regex_script.match(item.string)
 
             if script is not None:

@@ -7,8 +7,10 @@ while True:
         p = Parser(username, password, category)
         res = p.loadpages()
 
-        if ~res:
-            p = Parser(username, password, category)
+        if res is None:
+        	continue;
+        elif ~res:
+        	p.loadpages()
 
         sleep(10)
 
