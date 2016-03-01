@@ -5,7 +5,12 @@ from time import sleep
 while True:
     for category in Catogeries:
         p = Parser(username, password, category)
-        p.loadpages()
+        res = p.loadpages()
+
+        if ~res:
+            p = Parser(username, password, category)
+
         sleep(10)
 
-    sleep(600)
+    print 'crawler system rest for 1,800s'
+    sleep(1800)

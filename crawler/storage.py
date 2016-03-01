@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, ListField, ReferenceField
+from mongoengine import Document, StringField, ListField, BooleanField, ReferenceField
 
 
 class User(Document):
@@ -11,7 +11,7 @@ class Content(Document):
     content = StringField(required=True)
     tag = StringField(required=True)
     images = ListField()
-
+    imagesfile = BooleanField(default=False)
     author = ReferenceField(User)
 
 
@@ -26,3 +26,33 @@ def weibo_save(name, avatar, mid, content, tag, images):
 
     con = Content(mid=mid, content=content, tag=tag, author=user, images=images)
     con.save()
+
+
+def download(filename, urls):
+    count = 0
+    for url in urls:
+        count += 1
+        fn = 'D:/img/'+filename + '_' + str(count) + '.' + url.split('.')[-1][0:3]
+        with open(fn, 'wb') as f:
+            respose = urllib2.urlopen(url)
+            img = respose.read()
+            f.write(img)
+            f.flush()
+            f.close()
+
+def imgdownload(num=30):
+    for con in Content.objects:
+        urls = con.images
+        download(con.mid, urls)
+
+        # con.update(imagesfile=True)
+
+        # con.imagesfile = True
+
+
+if __name__ == '__main__':
+    from mongoengine import connect
+    import urllib2
+
+    connect(db="Weibo")
+    imgdownload()

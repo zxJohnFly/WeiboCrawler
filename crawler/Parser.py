@@ -31,18 +31,14 @@ class Parser(object):
 
         logger.info('crawler category: %s', self.tag)
 
-    def __retry(self, url, times=20):
+    def __retry(self, url, times=30):
         page = None
         for _ in range(times):
             try:
-                page = self.opener.open(url, timeout=5).read()
+                page = self.opener.open(url, timeout=60)
+                page = page.read()
             except urllib2.URLError, e:
-                if isinstance(e.reason, socket.timeout):
-                    raise MyException("There was an error: %r" % e)
-                else:
-                    logger.info('Fail to open "%s", try again.' % url)
-            except socket.timeout, e:
-                raise MyException("There was an error: %r" % e)
+                logger.info('Fail to open "%s", try again.' % url)
             else:
                 return page
 
@@ -78,7 +74,6 @@ class Parser(object):
         try:
             end_id = divs[0]['mid']
         except IndexError:
-            print page
             raise IndexError
 
         for div in divs:
@@ -175,7 +170,8 @@ class Parser(object):
                     self.__purifier(jump_json["data"])
         except IndexError:
             logger.info('%s Craler finished' % self.tag)
-        except MyException:
-            pass
+            return True
+        except socket.timeout:
+            return False
         except Exception, e:
-            logger.debug(e.message)
+            logger.debug(e)
