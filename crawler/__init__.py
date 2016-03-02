@@ -5,7 +5,7 @@ logger = logging.getLogger('crawler')
 logger.setLevel(logging.DEBUG)
 
 fh = logging.FileHandler('crawler.log')
-fh.setLevel(logging.DEBUG)
+fh.setLevel(logging.WARNING)
 
 ch = logging.StreamHandler()
 # ch.setLevel(logging.INFO)
