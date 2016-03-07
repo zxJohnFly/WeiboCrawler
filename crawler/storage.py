@@ -37,16 +37,19 @@ def download(filename, urls):
             suffix = 'jpg' if len(url_split) is not 2 else url_split[-1]
             fn = os.path.join(imgfolder, filename + '_' + str(count) + '.' + suffix)
 
+            respose = urllib2.urlopen(url, timeout=20)
+            img = respose.read()
+
             with open(fn, 'wb') as f:
-                respose = urllib2.urlopen(url)
-                img = respose.read()
                 f.write(img)
                 f.flush()
                 f.close()
 
             logger.info('mid: %s images downloaded' % filename)
+            return True
         except Exception, e:
             logger.warning('mid: {0} error {1}'.format(filename, e))
+            return False
 
 def imgdownload(num=30):
     global imgfolder
@@ -55,18 +58,17 @@ def imgdownload(num=30):
     if os.path.exists(imgfolder) is not True:
         os.mkdir(imgfolder)
     for con in Content.objects:
-        # if con.imagesfile is True:
-        #     continue
-        # else:
+        if con.imagesfile is True:
+            continue
+        else:
             urls = con.images
-            download(con.mid, urls)
-
-            # con.update(imagesfile=True)
+            if download(con.mid, urls):
+                con.update(imagesfile=True)
 
 
 if __name__ == '__main__':
     from mongoengine import connect
-    from crawler import logger
+    from __init__ import logger
     import urllib2
     import os
     import urlparse
