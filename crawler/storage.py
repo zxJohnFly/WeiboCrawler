@@ -1,79 +1,45 @@
-from mongoengine import Document, StringField, ListField, BooleanField, ReferenceField
+#coding=utf-8
+
+from mongoengine import Document, EmbeddedDocument, StringField, ListField, IntField,EmbeddedDocumentField,DateTimeField, BooleanField
 
 
-class User(Document):
-    Name = StringField(required=True, primary_key=True)
-    Avatar = StringField(required=True)
+def save_User(uid, username, avatar, desc):
+    user = User(id=uid, username=username, avatar=avatar, description=desc)
 
-
-class Content(Document):
-    mid = StringField(required=True, primary_key=True)
-    content = StringField(required=True)
-    tag = StringField(required=True)
-    images = ListField()
-    imagesfile = BooleanField(default=False)
-    author = ReferenceField(User)
-
-
-def exist(mid):
-    return Content.objects(mid=str(mid)).count()
-
-
-def weibo_save(name, avatar, mid, content, tag, images):
-    user = User(Name=name, Avatar=avatar)
     if user not in User.objects:
         user.save()
 
-    con = Content(mid=mid, content=content, tag=tag, author=user, images=images)
-    con.save()
+def save_Content(uid, datetime, text, urls):
+    user = User.objects.get(id=int(uid))
+    content = Content(datetime=datetime, text=text, picture_url=urls)
+    user.message_content.append(content)
+
+    user.save()
 
 
-def download(filename, urls):
-    count = 0
-    for url in urls:
-        count += 1
-        try:
-            url_split = urlparse.urlparse(url).path.split('.')
-            suffix = 'jpg' if len(url_split) is not 2 else url_split[-1]
-            fn = os.path.join(imgfolder, filename + '_' + str(count) + '.' + suffix)
+def save_uid(uid):
+    _uid = Uid(uid=uid, isCrawled=False)
 
-            respose = urllib2.urlopen(url, timeout=20)
-            img = respose.read()
-
-            with open(fn, 'wb') as f:
-                f.write(img)
-                f.flush()
-                f.close()
-
-            logger.info('mid: %s images downloaded' % filename)
-            return True
-        except Exception, e:
-            logger.warning('mid: {0} error {1}'.format(filename, e))
-            return False
-
-def imgdownload(num=30):
-    global imgfolder
-    imgfolder = os.path.join(basepath,'img')
-
-    if os.path.exists(imgfolder) is not True:
-        os.mkdir(imgfolder)
-    for con in Content.objects:
-        if con.imagesfile is True:
-            continue
-        else:
-            urls = con.images
-            if download(con.mid, urls):
-                con.update(imagesfile=True)
+    if _uid not in Uid.objects:
+        _uid.save()
 
 
-if __name__ == '__main__':
-    from mongoengine import connect
-    from __init__ import logger
-    import urllib2
-    import os
-    import urlparse
+class Content(EmbeddedDocument):
+    datetime = DateTimeField(required=True)
+    text = StringField()
+    picture_url = ListField(StringField())
+    # video_url = StringField()
 
-    basepath = '\\'.join(__file__.split('/')[0:-2])
 
-    connect(db="Weibo")
-    imgdownload()
+class User(Document):
+    id = IntField(required=True, primary_key=True)
+    username = StringField(required=True)
+    avatar = StringField(required=True)
+    description = StringField(required=True)
+    # message_num = IntField()
+    message_content = ListField(EmbeddedDocumentField(Content))
+
+class Uid(Document):
+    uid = IntField(required=True, primary_key=True)
+    isCrawled = BooleanField(default=False)
+

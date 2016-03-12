@@ -1,4 +1,3 @@
-from . import logger
 import urllib
 import base64
 import binascii
@@ -12,6 +11,8 @@ class WeiboLogin(object):
         self.opener = opener
         self.username = username
         self.passwd = passwd
+
+        self.login()
 
     def get_user(self, username):
         username = urllib.quote(username)
@@ -81,6 +82,6 @@ class WeiboLogin(object):
                 return result, json_data['reason']
             return result
         except Exception, e:
-            logger.info('login error')
+            print 'login error'
 
             return False
