@@ -93,16 +93,10 @@ class WeiboParser(Parser):
         self.uid = uid
         self.domid = 'Pl_Official_MyProfileFeed'
 
-    def __parse(self, div):
-        weibo = div.find("div", class_="WB_feed_detail clearfix")
-        WB_detail = weibo.find("div", class_="WB_detail")
-        date = WB_detail.find("div", class_="WB_from S_txt2")
-        date = date.a['title']
-
-        # get content
-        WB_text = WB_detail.find("div", class_="WB_text W_f14")
+    def __formatter(self, div):
         text = ''
-        for text_children in WB_text.children:
+
+        for text_children in div.children:
             if text_children.__class__.__name__ is 'Tag':
                 tmp = text_children.string
                 if tmp is not None:
@@ -110,19 +104,13 @@ class WeiboParser(Parser):
             else:
                 text += text_children
 
-        # get extent content
-        WB_expand = WB_detail.find("div", class_="WB_feed_expand")
+        return text.strip()
 
-        WB_media = WB_detail.find("div", class_="WB_media_wrap clearfix")
-        imgs = []
-        if WB_media is not None:
-            # the div may contain videos and links, just ignore those
-            imgs = WB_media.find_all("img")
-            imgs = [img['src'] for img in imgs]
-
-        return text, date, imgs, WB_expand
-
-    def parse(self):
+    def parse(self, jump=True):
+        # print self.page
+        # if jump:
+        #     pass
+        # else:
         res = self.purify(self.page, self.domid)
 
         soup = BeautifulSoup(res, 'lxml')
@@ -134,11 +122,29 @@ class WeiboParser(Parser):
             raise IndexError
 
         for div in divs:
-            text, date, imgs, WB_expand = self.__parse(div)
+            weibo = div.find("div", class_="WB_feed_detail clearfix")
+            WB_detail = weibo.find("div", class_="WB_detail")
+            date = WB_detail.find("div", class_="WB_from S_txt2")
+            date = date.a['title']
 
-            # if WB_expand is not None:
-            #     expand_text, expand_date, expand_imgs, eexpand = self.__parse(WB_expand)
-            #     text = text + '\n' + expand_text
-            #     imgs = imgs + expand_imgs
+            # get content
+            WB_text = WB_detail.find("div", class_="WB_text W_f14")
+            text = self.__formatter(WB_text)
 
-            save_Content(self.uid, date, text, imgs)
+            # get extent content
+            WB_expand = WB_detail.find("div", class_="WB_feed_expand")
+            if WB_expand is not None:
+                WB_expand_text = WB_expand.find("div", class_="WB_text")
+                if WB_expand_text is not None:
+                    expand_text = self.__formatter(WB_expand_text)
+                    text = text + '::' + expand_text
+
+            WB_media = WB_detail.find("div", class_="WB_media_wrap clearfix")
+            imgs = []
+            if WB_media is not None:
+                # the div may contain videos and links, just ignore those
+                imgs = WB_media.find_all("img")
+                imgs = [img['src'] for img in imgs]
+
+            print self.uid, 'date:',date, 'text:',text,'imgs:',imgs
+            # save_Content(self.uid, date, text, imgs)

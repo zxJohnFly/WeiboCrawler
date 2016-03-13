@@ -1,7 +1,9 @@
 from Fetcher import WeiboLogin
 from Parser import InfoParser, FansParser, WeiboParser
 import urllib2
+import urllib
 import cookielib
+import time
 
 
 class Parser(object):
@@ -28,7 +30,26 @@ class Parser(object):
         parser.parse()
 
     def weibo_link(self):
-        link = 'http://weibo.com/%s?is_all=1' % self.uid
+        postdata = {
+            'ajwvr': '6',
+            'domain': '100505',
+            'pids':'',
+            'profile_ftype':'1',
+            'is_all':'1',
+            'pagebar':'2',
+            'pl_name':'',
+            'id':'100505' + str(self.uid),
+            'script_uri': r'/u/' + str(self.uid),
+            'feed_type':'0',
+            'page':'1',
+            'pre_page':'1',
+            'domain_op':'100505',
+            '__rnd':str(time.time()*1000)
+        }
+
+        pd = urllib.urlencode(postdata)
+
+        link = 'http://weibo.com/{0}?{1}'.format(self.uid, pd)
         self.__crawler(link, WeiboParser)
 
     def info_link(self):
@@ -52,10 +73,4 @@ if __name__ == '__main__':
     a = Parser('2311490760@qq.com', 'zx2681618', uid)
     a.info_link()
     a.weibo_link()
-    # a.weibo_link()
-    # page = a.loadpage(url+uid+'?is_all=1')
-    # page= a.extractor(page)
-
-    # print page[0]
-    # a.purifier(page)
 
