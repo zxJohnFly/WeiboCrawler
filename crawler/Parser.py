@@ -2,7 +2,6 @@
 
 from bs4 import BeautifulSoup
 from storage import save_uid, save_User, save_Content
-from setting import count_threshold
 import re
 import json
 
@@ -31,7 +30,7 @@ class InfoParser(Parser):
         self.uid = uid
 
     def parse(self):
-        res = self.purify(self.page, 'Pl_Official_Headerv6')
+        res = self.purify(self.page, 'Pl_Official_Headerv')
         soup = BeautifulSoup(res, 'lxml')
         avt = soup.find('p', class_='photo_wrap')
         avt = avt.img['src']
@@ -49,9 +48,9 @@ class InfoParser(Parser):
         for li in lis:
             spans = li.find_all('span')
 
-            if spans[0].string == u'昵称':
+            if spans[0].string == u'昵称：':
                 name = spans[1].string
-            elif spans[0].string == u'简介':
+            elif spans[0].string == u'简介：':
                 desc = spans[1].string
 
         save_User(self.uid, name, avt, desc)
@@ -79,7 +78,7 @@ class FansParser(Parser):
             except ValueError:
                 continue
             else:
-                if count >= count_threshold:
+                if count >= 100:
                     print 'uid:',uid,'\t count:', count
                     self.__store(uid)
 
@@ -106,11 +105,7 @@ class WeiboParser(Parser):
 
         return text.strip()
 
-    def parse(self, jump=True):
-        # print self.page
-        # if jump:
-        #     pass
-        # else:
+    def parse(self):
         res = self.purify(self.page, self.domid)
 
         soup = BeautifulSoup(res, 'lxml')
