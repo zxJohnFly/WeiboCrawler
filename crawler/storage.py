@@ -1,5 +1,4 @@
 #coding=utf-8
-
 from mongoengine import Document, EmbeddedDocument, StringField, ListField, IntField,EmbeddedDocumentField,DateTimeField, BooleanField
 
 
@@ -8,6 +7,16 @@ def save_User(uid, username, avatar, desc):
 
     if user not in User.objects:
         user.save()
+        print 'uid: {0}\tnickname '
+
+
+def save_BigV(uid):
+    user = BigV(uid=uid, isCrawled=False)
+
+    if user not in BigV.objects:
+        user.save()
+        print uid
+
 
 def save_Content(uid, datetime, text, urls):
     user = User.objects.get(id=int(uid))
@@ -40,6 +49,9 @@ class User(Document):
     message_content = ListField(EmbeddedDocumentField(Content))
 
 class Uid(Document):
-    uid = IntField(required=True, primary_key=True)
+    uid = StringField(required=True, primary_key=True)
     isCrawled = BooleanField(default=False)
 
+class BigV(Document):
+    uid = StringField(required=True, primary_key=True)
+    isCrawled = BooleanField(default=False)

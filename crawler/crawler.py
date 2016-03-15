@@ -1,9 +1,12 @@
 from Fetcher import WeiboLogin
-from Parser import InfoParser, FansParser, WeiboParser
+from Parser import InfoParser, FansParser, WeiboParser, BigVParser
+from . import logger
 import urllib2
 import urllib
 import cookielib
 import time
+import socket
+import random
 
 
 class Crawler(object):
@@ -17,17 +20,42 @@ class Crawler(object):
 
         WeiboLogin(self.opener, self.username, self.password)
 
-    def __loadpage(self, url, timeout=None):
-        page = self.opener.open(url, timeout=timeout)
+    def _get_rand(self):
+        r1 = random.randint(5,10)
+        r2 = random.randint(1,5)
+
+        return r1 - r2
+
+
+    def __loadpage(self, url):
+        page = None
+
+        for _ in range(5):
+            try:
+                page = self.opener.open(url, timeout=120)
+            except socket.timeout:
+                print 'timeout'
+            else:
+                break
 
         return page.read()
 
+
     def __crawler(self, url, uid, Parser):
         print url
-        page = self.__loadpage(url)
-        parser = Parser(page, uid)
 
+        delay = self._get_rand()
+        time.sleep(delay)
+
+        page = self.__loadpage(url)
+
+        if page is None:
+            logger.info(url, uid)
+            raise socket.timeout
+
+        parser = Parser(page, uid)
         parser.parse()
+
 
     def weibo_link(self, uid):
         def first_block_url(page):
@@ -61,31 +89,38 @@ class Crawler(object):
                 self.__crawler(extract_block_url(fpage,0), uid, WeiboParser)
                 self.__crawler(extract_block_url(fpage,1), uid, WeiboParser)
             except IndexError:
+                print 'uid:%s finished!!' % uid
                 break
+            except socket.timeout:
+                return False
             except Exception,e:
                 print e
             fpage = fpage + 1
 
+        return True
+
     def info_link(self, uid):
         link = 'http://weibo.com/%s/info' % uid
-        self.__crawler(link, uid, InfoParser)
+
+        try:
+            self.__crawler(link, uid, InfoParser)
+        except socket.timeout:
+            return False
+        else:
+            return True
+
 
     def fans_link(self, uid):
         link = 'http://weibo.com/%s/fans' % uid
 
         for _ in range(1,6):
             url = link + '?page=%s' % _
-            self.__crawler(url, uid, FansParser)
+            try:
+                self.__crawler(url, uid, FansParser)
+            except socket.timeout:
+                continue
 
-# if __name__ == '__main__':
-#     from mongoengine import connect
-#     from setting import db_name
-#     connect(db=db_name)
-#     uid = '5572759558'
-#     # uid = '1661467473'
-#
-#     a = Parser('2311490760@qq.com', 'zx2681618', uid)
-#     # a.info_link()
-#     # a.weibo_link()
-#     a.fans_link()
-
+    def bigV_link(self,category):
+        for _ in range(1,141):
+            url = 'http://d.weibo.com/{0}?page={1}'.format(category,_)
+            self.__crawler(url,None,BigVParser)

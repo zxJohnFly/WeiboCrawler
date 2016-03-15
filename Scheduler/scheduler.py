@@ -1,20 +1,20 @@
 from Crawler import storage, crawler
-from setting import username, password, process_num
+from setting import username, password
 
+cl = crawler.Crawler(username, password)
 
-def batch_uid(num):
-    uids = []
-
+def main():
     for uid in storage.Uid.objects:
-        if ~uid.isCrawled:
-            uids.append(uid.uid)
+        cl.info_link(uid.uid)
+        cl.weibo_link(uid.uid)
+        uid.update(isCrawled = True)
 
-        if len(uid) >= num:
-            break
-
-    return uids
+def run():
+    for bigv in storage.BigV.objects:
+        if not bigv.isCrawled:
+            cl.fans_link(bigv.uid)
+            bigv.update(isCrawled = True)
 
 if __name__ == '__main__':
-    nCrawler = crawler.Crawler(username, password)
-    nCrawler.weibo_link(batch_uid(1)[0])
-
+    # cl.bigV_link('1087030002_2975_2025_0')
+    run()

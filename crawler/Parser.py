@@ -1,9 +1,10 @@
 #coding=utf-8
 
 from bs4 import BeautifulSoup
-from storage import save_uid, save_User, save_Content
+from storage import save_uid, save_User, save_Content, save_BigV
 import re
 import json
+import urlparse
 
 
 class Parser(object):
@@ -14,7 +15,11 @@ class Parser(object):
         regex_script = re.compile('FM.view\((.*)\)')
 
         for item in scripts:
-            script = regex_script.match(item.string)
+            try:
+                script = regex_script.match(item.string)
+            except TypeError:
+                print 'TypeError: %s' % str(type(script))
+                break
 
             if script is not None:
                 script_dict = json.loads(script.group(1))
@@ -64,6 +69,9 @@ class FansParser(Parser):
     def parse(self):
         res = self.purify(self.page, self.domid)
 
+        if res is None:
+            return
+
         soup = BeautifulSoup(res, 'lxml')
         fans_info = soup.find_all('div',class_='info_connect')
 
@@ -73,14 +81,9 @@ class FansParser(Parser):
             uid = info['href'][3:]
             count = int(info.string)
 
-            try:
-                uid = int(uid)
-            except ValueError:
-                continue
-            else:
-                if count >= 100:
-                    print 'uid:',uid,'\t count:', count
-                    self.__store(uid)
+            if count >= 100:
+                print 'uid:',uid,'\t count:', count
+                self.__store(uid)
 
     def __store(self, uid):
         save_uid(uid)
@@ -142,4 +145,25 @@ class WeiboParser(Parser):
                 imgs = [img['src'] for img in imgs]
 
             print self.uid, 'date:',date, 'text:',text,'imgs:',imgs
-            # save_Content(self.uid, date, text, imgs)
+            save_Content(self.uid, date, text, imgs)
+
+class BigVParser(Parser):
+    def __init__(self, page, uid):
+        self.page = page
+        self.uid = uid
+        self.domid = 'Pl_Core_F4RightUserList'
+
+    def parse(self):
+        res = self.purify(self.page, self.domid)
+
+        soup = BeautifulSoup(res, 'lxml')
+        divs = soup.find_all("div", class_='info_name W_fb W_f14')
+
+        for div in divs:
+            a = div.a['href']
+            uid = urlparse.urlparse(a).path.split('/')[-1]
+            self._store(uid)
+
+
+    def _store(self, uid):
+        save_BigV(uid)
