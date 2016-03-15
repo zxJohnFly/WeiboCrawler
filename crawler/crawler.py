@@ -1,12 +1,14 @@
 from Fetcher import WeiboLogin
 from Parser import InfoParser, FansParser, WeiboParser, BigVParser
 from . import logger
+from multiprocessing import Pool
 import urllib2
 import urllib
 import cookielib
 import time
 import socket
 import random
+import types
 
 
 class Crawler(object):
@@ -56,7 +58,6 @@ class Crawler(object):
         parser = Parser(page, uid)
         parser.parse()
 
-
     def weibo_link(self, uid):
         def first_block_url(page):
             return 'http://weibo.com/{0}?page={1}&is_all=1'.format(uid, page)
@@ -92,9 +93,12 @@ class Crawler(object):
                 print 'uid:%s finished!!' % uid
                 break
             except socket.timeout:
+                logger.info('uid:%s timeout'%uid)
                 return False
             except Exception,e:
-                print e
+                logger.info('uid:{0} error:'.format(uid, e))
+                return False
+
             fpage = fpage + 1
 
         return True
@@ -108,7 +112,6 @@ class Crawler(object):
             return False
         else:
             return True
-
 
     def fans_link(self, uid):
         link = 'http://weibo.com/%s/fans' % uid
@@ -124,3 +127,22 @@ class Crawler(object):
         for _ in range(1,141):
             url = 'http://d.weibo.com/{0}?page={1}'.format(category,_)
             self.__crawler(url,None,BigVParser)
+
+    def crawler_pool(self, method, param):
+        handle = None
+
+        try:
+            handle = self.__getattribute__(method)
+        except AttributeError,e:
+            print "Class crawler doesn't have method [%s]" % method
+            return
+
+        if type(param) is types.ListType:
+            if len(param) == 1:
+                handle(param[0])
+            else:
+                pass
+        elif types(param) is types.StringType:
+            handle(param)
+        else:
+            print 'inValid param'

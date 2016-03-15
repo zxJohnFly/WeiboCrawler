@@ -1,4 +1,4 @@
 username = ''
 password = ''
 
-db_name = ''
+db_name = 'myweibo'

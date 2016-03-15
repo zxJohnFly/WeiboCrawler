@@ -35,8 +35,16 @@ class InfoParser(Parser):
         self.uid = uid
 
     def parse(self):
+        res = self.purify(self.page, 'Pl_Core_T8CustomTriColumn')
+        soup = BeautifulSoup(res, 'lxml')
+
+        table = soup.find('table', class_='tb_counter')
+        a = table.find_all('a')
+        num = a[-1].strong.string
+
         res = self.purify(self.page, 'Pl_Official_Headerv')
         soup = BeautifulSoup(res, 'lxml')
+
         avt = soup.find('p', class_='photo_wrap')
         avt = avt.img['src']
 
@@ -58,7 +66,7 @@ class InfoParser(Parser):
             elif spans[0].string == u'简介：':
                 desc = spans[1].string
 
-        save_User(self.uid, name, avt, desc)
+        save_User(self.uid, name, avt, desc, num)
 
 
 class FansParser(Parser):
@@ -120,6 +128,7 @@ class WeiboParser(Parser):
             raise IndexError
 
         for div in divs:
+            mid = div['mid']
             weibo = div.find("div", class_="WB_feed_detail clearfix")
             WB_detail = weibo.find("div", class_="WB_detail")
             date = WB_detail.find("div", class_="WB_from S_txt2")
@@ -144,8 +153,7 @@ class WeiboParser(Parser):
                 imgs = WB_media.find_all("img")
                 imgs = [img['src'] for img in imgs]
 
-            print self.uid, 'date:',date, 'text:',text,'imgs:',imgs
-            save_Content(self.uid, date, text, imgs)
+            save_Content(self.uid, mid, date, text, imgs)
 
 class BigVParser(Parser):
     def __init__(self, page, uid):

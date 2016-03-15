@@ -2,12 +2,12 @@
 from mongoengine import Document, EmbeddedDocument, StringField, ListField, IntField,EmbeddedDocumentField,DateTimeField, BooleanField
 
 
-def save_User(uid, username, avatar, desc):
-    user = User(id=uid, username=username, avatar=avatar, description=desc)
+def save_User(uid, username, avatar, desc, num):
+    user = User(id=uid, username=username, avatar=avatar, description=desc, message_num=num)
 
     if user not in User.objects:
         user.save()
-        print 'uid: {0}\tnickname '
+        # print 'uid: {0}\tnickname:{1}'.format(uid, username)
 
 
 def save_BigV(uid):
@@ -18,12 +18,13 @@ def save_BigV(uid):
         print uid
 
 
-def save_Content(uid, datetime, text, urls):
-    user = User.objects.get(id=int(uid))
-    content = Content(datetime=datetime, text=text, picture_url=urls)
-    user.message_content.append(content)
+def save_Content(uid, mid, datetime, text, urls):
+    user = User.objects.get(id=uid)
+    content = Content(mid=mid, datetime=datetime, text=text, picture_url=urls)
 
-    user.save()
+    if mid not in [msg.mid for msg in user.message_content]:
+        user.message_content.append(content)
+        user.save()
 
 
 def save_uid(uid):
@@ -34,23 +35,25 @@ def save_uid(uid):
 
 
 class Content(EmbeddedDocument):
+    mid = StringField(required=True, primary_key=True)
     datetime = DateTimeField(required=True)
     text = StringField()
     picture_url = ListField(StringField())
-    # video_url = StringField()
 
 
 class User(Document):
-    id = IntField(required=True, primary_key=True)
+    id = StringField(required=True, primary_key=True)
     username = StringField(required=True)
     avatar = StringField(required=True)
     description = StringField(required=True)
-    # message_num = IntField()
+    message_num = IntField(required=True)
     message_content = ListField(EmbeddedDocumentField(Content))
+
 
 class Uid(Document):
     uid = StringField(required=True, primary_key=True)
     isCrawled = BooleanField(default=False)
+
 
 class BigV(Document):
     uid = StringField(required=True, primary_key=True)
