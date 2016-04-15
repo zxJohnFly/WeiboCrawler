@@ -18,7 +18,10 @@ class Parser(object):
             try:
                 script = regex_script.match(item.string)
             except TypeError:
-                print 'TypeError: %s' % str(type(script))
+                print 'TypeError'
+                break
+            except Exception, e:
+                print e
                 break
 
             if script is not None:
@@ -36,6 +39,10 @@ class InfoParser(Parser):
 
     def parse(self):
         res = self.purify(self.page, 'Pl_Core_T8CustomTriColumn')
+
+        if res is None:
+            return False
+
         soup = BeautifulSoup(res, 'lxml')
 
         table = soup.find('table', class_='tb_counter')
@@ -49,6 +56,8 @@ class InfoParser(Parser):
         avt = avt.img['src']
 
         res = self.purify(self.page, self.domid)
+        if res is None:
+            return
 
         soup = BeautifulSoup(res, 'lxml')
         infos = soup.find('div', class_='m_wrap clearfix')
@@ -78,7 +87,7 @@ class FansParser(Parser):
         res = self.purify(self.page, self.domid)
 
         if res is None:
-            return
+            return False
 
         soup = BeautifulSoup(res, 'lxml')
         fans_info = soup.find_all('div',class_='info_connect')
@@ -92,6 +101,9 @@ class FansParser(Parser):
             if count >= 100:
                 print 'uid:',uid,'\t count:', count
                 self.__store(uid)
+
+        return True
+
 
     def __store(self, uid):
         save_uid(uid)
@@ -118,6 +130,9 @@ class WeiboParser(Parser):
 
     def parse(self):
         res = self.purify(self.page, self.domid)
+
+        if res is None:
+            raise IndexError
 
         soup = BeautifulSoup(res, 'lxml')
         divs = soup.find_all("div", attrs={"action-type": "feed_list_item"})
@@ -154,6 +169,8 @@ class WeiboParser(Parser):
                 imgs = [img['src'] for img in imgs]
 
             save_Content(self.uid, mid, date, text, imgs)
+
+        return True
 
 class BigVParser(Parser):
     def __init__(self, page, uid):

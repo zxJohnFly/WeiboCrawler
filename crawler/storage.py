@@ -1,13 +1,15 @@
 #coding=utf-8
 from mongoengine import Document, EmbeddedDocument, StringField, ListField, IntField,EmbeddedDocumentField,DateTimeField, BooleanField
-
+from setting import DEBUG
 
 def save_User(uid, username, avatar, desc, num):
-    user = User(id=uid, username=username, avatar=avatar, description=desc, message_num=num)
+    if DEBUG:
+        print 'uid:{0}, username:{1},avatar:{2},description:{3}'.format(uid, username, avatar, desc)
+    else:
+        user = User(id=uid, username=username, avatar=avatar, description=desc, message_num=num)
 
-    if user not in User.objects:
-        user.save()
-        # print 'uid: {0}\tnickname:{1}'.format(uid, username)
+        if user not in User.objects:
+            user.save()
 
 
 def save_BigV(uid):
@@ -19,12 +21,15 @@ def save_BigV(uid):
 
 
 def save_Content(uid, mid, datetime, text, urls):
-    user = User.objects.get(id=uid)
-    content = Content(mid=mid, datetime=datetime, text=text, picture_url=urls)
+    if DEBUG:
+        print 'uid:{0},mid:{1}'.format(uid, mid)
+    else:
+        user = User.objects.get(id=uid)
+        content = Content(mid=mid, datetime=datetime, text=text, picture_url=urls)
 
-    if mid not in [msg.mid for msg in user.message_content]:
-        user.message_content.append(content)
-        user.save()
+        if mid not in [msg.mid for msg in user.message_content]:
+            user.message_content.append(content)
+            user.save()
 
 
 def save_uid(uid):
@@ -58,3 +63,14 @@ class Uid(Document):
 class BigV(Document):
     uid = StringField(required=True, primary_key=True)
     isCrawled = BooleanField(default=False)
+
+if __name__ == '__main__':
+    from mongoengine import connect
+    connect(db='myweibo')
+
+    count = 0
+    for user in User.objects:
+        print user.id, user.message_num,'->',len(user.message_content)
+        count = count + len(user.message_content)
+
+    print count

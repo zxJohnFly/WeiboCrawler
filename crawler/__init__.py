@@ -1,9 +1,9 @@
 from mongoengine import connect
-from setting import db_name
+from setting import DB_NAME
 import logging
 
 
-connect(db=db_name)
+connect(db=DB_NAME)
 
 logger = logging.getLogger('crawler')
 logger.setLevel(logging.DEBUG)

@@ -1,7 +1,7 @@
 from Fetcher import WeiboLogin
 from Parser import InfoParser, FansParser, WeiboParser, BigVParser
 from . import logger
-from multiprocessing import Pool
+from datetime import datetime
 import urllib2
 import urllib
 import cookielib
@@ -44,15 +44,20 @@ class Crawler(object):
 
 
     def __crawler(self, url, uid, Parser):
-        print url
+        print '[{0}]:{1}'.format(datetime.now(), url)
 
         delay = self._get_rand()
         time.sleep(delay)
 
-        page = self.__loadpage(url)
+        page = None
+        try:
+            page = self.__loadpage(url)
+        except Exception, e:
+            print e
+            logger.info(e)
 
         if page is None:
-            logger.info(url, uid)
+            logger.info(url+uid)
             raise socket.timeout
 
         parser = Parser(page, uid)
@@ -139,10 +144,10 @@ class Crawler(object):
 
         if type(param) is types.ListType:
             if len(param) == 1:
-                handle(param[0])
+                res = handle(param[0])
             else:
                 pass
         elif types(param) is types.StringType:
-            handle(param)
-        else:
-            print 'inValid param'
+            res = handle(param)
+
+        return res
